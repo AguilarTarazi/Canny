@@ -460,7 +460,7 @@ short int **delta_x, short int **delta_y)
     // }
 
     // MPI_Gatherv(delta_x_temp,cantidad/numtasks,MPI_SHORT,*delta_x,counts,displs,MPI_SHORT,0,MPI_COMM_WORLD);
-    MPI_Gather(delta_x_temp,cantidad/numtasks,MPI_SHORT,*delta_x,cantidad/numtasks,MPI_SHORT,0,MPI_COMM_WORLD);
+    // MPI_Gather(delta_x_temp,cantidad/numtasks,MPI_SHORT,*delta_x,cantidad/numtasks,MPI_SHORT,0,MPI_COMM_WORLD);
     // MPI_Allgather(delta_x_temp,cantidad/numtasks,MPI_SHORT,*delta_x,cantidad/numtasks,MPI_SHORT,MPI_COMM_WORLD);
     // if(rank==1) for(int i=0;i<10;i++) printf("%d ",smoothedim_temp[i] ); printf("\n");
 
