@@ -433,34 +433,35 @@ short int **delta_x, short int **delta_y)
     * Compute the x-derivative. Adjust the derivative at the borders to avoid
     * losing pixels.
     ****************************************************************************/
-    // int counts[numtasks], displs[numtasks];
-    // for (int t = 0; t < numtasks; t++) {
-    //     counts[t] = cantidad / numtasks + 2*cols;
-    //     displs[t] = t * cantidad / numtasks;
-    //     // Para todos los procesos distintos del primero, retrocedo una fila,
-    //     // para que quede una fila adicional arriba y una abajo
-    //     if(rank > 0) displs[t] -= cols;
-    //     printf("displs[%d] = %d\n",t, displs[t] );
-    // }
-    // MPI_Scatterv(smoothedim,counts,displs,MPI_SHORT,smoothedim_temp,cantidad/numtasks+2*cols,MPI_SHORT,0,MPI_COMM_WORLD);
-    // printf("RANK %d cruzo Scatterv\n",rank );
+    int counts[numtasks], displs[numtasks];
+    for (int t = 0; t < numtasks; t++) {
+        counts[t] = cantidad / numtasks + 2*cols;
+        displs[t] = t * cantidad / numtasks;
+        // Para todos los procesos distintos del primero, retrocedo una fila,
+        // para que quede una fila adicional arriba y una abajo
+        if(rank > 0) displs[t] -= cols;
+        printf("displs[%d] = %d\n",t, displs[t] );
+    }
+    MPI_Scatterv(smoothedim,counts,displs,MPI_SHORT,p_ini,cantidad/numtasks+2*cols,MPI_SHORT,0,MPI_COMM_WORLD);
+    printf("RANK %d cruzo Scatterv\n",rank );
     // if(rank > 0) // && rank != numtasks-1)
     // nms_temp = nms_temp + cols;
 
     if(VERBOSE) printf("   Computing the X-direction derivative.\n");
-    MPI_Scatter(smoothedim, cantidad/numtasks, MPI_SHORT, smoothedim_temp, cantidad/numtasks, MPI_SHORT, 0, MPI_COMM_WORLD);
+
+    // MPI_Scatter(smoothedim, cantidad/numtasks, MPI_SHORT, smoothedim_temp, cantidad/numtasks, MPI_SHORT, 0, MPI_COMM_WORLD);
     int i,j;
-    // for (i = 0; i < cantidad/numtasks; i=i+cols) {
-    //     j=0;
-    //     delta_x_temp[i+j] = smoothedim_temp[i+j+1] - smoothedim_temp[i+j];
-    //     for (j = 1; j < cols-1; j++) {
-    //         (delta_x_temp)[i+j] = smoothedim_temp[i+j+1] - smoothedim_temp[i+j-1];
-    //     }
-    //     delta_x_temp[i+j] = smoothedim_temp[i+j] - smoothedim_temp[i+j-1];
-    // }
+    for (i = 0; i < cantidad/numtasks; i=i+cols) {
+        j=0;
+        delta_x_temp[i+j] = smoothedim_temp[i+j+1] - smoothedim_temp[i+j];
+        for (j = 1; j < cols-1; j++) {
+            (delta_x_temp)[i+j] = smoothedim_temp[i+j+1] - smoothedim_temp[i+j-1];
+        }
+        delta_x_temp[i+j] = smoothedim_temp[i+j] - smoothedim_temp[i+j-1];
+    }
 
     // MPI_Gatherv(delta_x_temp,cantidad/numtasks,MPI_SHORT,*delta_x,counts,displs,MPI_SHORT,0,MPI_COMM_WORLD);
-    // MPI_Gather(delta_x_temp,cantidad/numtasks,MPI_SHORT,*delta_x,cantidad/numtasks,MPI_SHORT,0,MPI_COMM_WORLD);
+    MPI_Gather(delta_x_temp,cantidad/numtasks,MPI_SHORT,*delta_x,cantidad/numtasks,MPI_SHORT,0,MPI_COMM_WORLD);
     // MPI_Allgather(delta_x_temp,cantidad/numtasks,MPI_SHORT,*delta_x,cantidad/numtasks,MPI_SHORT,MPI_COMM_WORLD);
     // if(rank==1) for(int i=0;i<10;i++) printf("%d ",smoothedim_temp[i] ); printf("\n");
 
@@ -471,73 +472,73 @@ short int **delta_x, short int **delta_y)
     // Se realizan los envios de las filas correspondientes para luego calcular la derivada de cada elemento
     // MPI_Barrier(MPI_COMM_WORLD);
     if(numtasks>1){
-        if(rank==0){
-            //Envia ultima fila al siguiente.//Recibe primera fila del siguiente.
-            // printf("A. Soy %d\n",rank );
-            MPI_Send(smoothedim_temp+((cantidad/numtasks)-cols),cols, MPI_SHORT, rank+1, 0, MPI_COMM_WORLD);
-            MPI_Recv(p_fin, cols, MPI_SHORT,rank+1, 0, MPI_COMM_WORLD, &estado);
-            // for(int i=0;i<1;i++){
-            //     printf("[%d] send SMOO a [%d]\n",rank,rank+1 );
-            //     for(int j=0;j<10;j++){
-            //         printf("[%d]%d ",rank,smoothedim_temp[(cantidad/numtasks)-cols+j] );
-            //     }
-            //     printf("\n");
-            //     printf("[%d] recv en P_FIN de [%d]\n",rank,rank+1 );
-            //     for(int j=0;j<10;j++){
-            //         printf("[%d]%d ",rank,p_fin[j] );
-            //     }
-            //     printf("\n");
-            // }
-        }
-        else if(rank<numtasks-1){
-            //Envia primera fila al anterior, y ultima fila al siguiente.
-            //Recibe primera fila del siguiente, y ultima fila del anterior.
-            // printf("B. Soy %d\n",rank );
-
-            MPI_Recv(p_ini, cols, MPI_SHORT,rank-1, 0, MPI_COMM_WORLD, &estado);
-            MPI_Send(smoothedim_temp,cols, MPI_SHORT, rank-1, 0, MPI_COMM_WORLD);
-            MPI_Send(smoothedim_temp+((cantidad/numtasks)-cols),cols, MPI_SHORT, rank+1, 0, MPI_COMM_WORLD);
-            MPI_Recv(p_fin, cols, MPI_SHORT,rank+1, 0, MPI_COMM_WORLD, &estado);
-            // for(int i=0;i<1;i++){
-            //     printf("[%d] recv en P_INI de [%d]\n",rank,rank-1 );
-            //     for(int j=0;j<10;j++){
-            //         printf("[%d]%d ",rank,p_ini[j] );
-            //     }
-            //     printf("\n");
-            //     printf("[%d] send SMOO a [%d]\n",rank,rank-1 );
-            //     for(int j=0;j<10;j++){
-            //         printf("[%d]%d ",rank,smoothedim_temp[j] );
-            //     }
-            //     printf("\n");
-            //     printf("[%d] send SMOO a [%d]\n",rank,rank+1 );
-            //     for(int j=0;j<10;j++){
-            //         printf("[%d]%d ",rank,smoothedim_temp[(cantidad/numtasks)-cols+j] );
-            //     }
-            //     printf("\n");
-            //     printf("[%d] redv en P_FIN de [%d]\n",rank,rank+1 );
-            //     for(int j=0;j<10;j++){
-            //         printf("[%d]%d ",rank,p_fin[j] );
-            //     }
-            // }
-        }
-        else{
-            //Envia primera fila al anterior.//Recibe ultima fila del anterior.
-            // printf("C. Soy %d\n",rank );
-            MPI_Recv(p_ini, cols, MPI_SHORT,rank-1, 0, MPI_COMM_WORLD, &estado);
-            MPI_Send(smoothedim_temp,cols, MPI_SHORT, rank-1, 0, MPI_COMM_WORLD);
-            // for(int i=0;i<1;i++){
-            //     printf("[%d] recv en P_INI de [%d]\n",rank,rank-1 );
-            //     for(int j=0;j<10;j++){
-            //         printf("[%d]%d ",rank,p_ini[j] );
-            //     }
-            //     printf("\n");
-            //     printf("[%d] send SMOO a [%d]\n",rank,rank-1 );
-            //     for(int j=0;j<10;j++){
-            //         printf("[%d]%d ",rank,smoothedim_temp[j] );
-            //     }
-            //     printf("\n");
-            // }
-        }
+        // if(rank==0){
+        //     //Envia ultima fila al siguiente.//Recibe primera fila del siguiente.
+        //     // printf("A. Soy %d\n",rank );
+        //     MPI_Send(smoothedim_temp+((cantidad/numtasks)-cols),cols, MPI_SHORT, rank+1, 0, MPI_COMM_WORLD);
+        //     MPI_Recv(p_fin, cols, MPI_SHORT,rank+1, 0, MPI_COMM_WORLD, &estado);
+        //     // for(int i=0;i<1;i++){
+        //     //     printf("[%d] send SMOO a [%d]\n",rank,rank+1 );
+        //     //     for(int j=0;j<10;j++){
+        //     //         printf("[%d]%d ",rank,smoothedim_temp[(cantidad/numtasks)-cols+j] );
+        //     //     }
+        //     //     printf("\n");
+        //     //     printf("[%d] recv en P_FIN de [%d]\n",rank,rank+1 );
+        //     //     for(int j=0;j<10;j++){
+        //     //         printf("[%d]%d ",rank,p_fin[j] );
+        //     //     }
+        //     //     printf("\n");
+        //     // }
+        // }
+        // else if(rank<numtasks-1){
+        //     //Envia primera fila al anterior, y ultima fila al siguiente.
+        //     //Recibe primera fila del siguiente, y ultima fila del anterior.
+        //     // printf("B. Soy %d\n",rank );
+        //
+        //     MPI_Recv(p_ini, cols, MPI_SHORT,rank-1, 0, MPI_COMM_WORLD, &estado);
+        //     MPI_Send(smoothedim_temp,cols, MPI_SHORT, rank-1, 0, MPI_COMM_WORLD);
+        //     MPI_Send(smoothedim_temp+((cantidad/numtasks)-cols),cols, MPI_SHORT, rank+1, 0, MPI_COMM_WORLD);
+        //     MPI_Recv(p_fin, cols, MPI_SHORT,rank+1, 0, MPI_COMM_WORLD, &estado);
+        //     // for(int i=0;i<1;i++){
+        //     //     printf("[%d] recv en P_INI de [%d]\n",rank,rank-1 );
+        //     //     for(int j=0;j<10;j++){
+        //     //         printf("[%d]%d ",rank,p_ini[j] );
+        //     //     }
+        //     //     printf("\n");
+        //     //     printf("[%d] send SMOO a [%d]\n",rank,rank-1 );
+        //     //     for(int j=0;j<10;j++){
+        //     //         printf("[%d]%d ",rank,smoothedim_temp[j] );
+        //     //     }
+        //     //     printf("\n");
+        //     //     printf("[%d] send SMOO a [%d]\n",rank,rank+1 );
+        //     //     for(int j=0;j<10;j++){
+        //     //         printf("[%d]%d ",rank,smoothedim_temp[(cantidad/numtasks)-cols+j] );
+        //     //     }
+        //     //     printf("\n");
+        //     //     printf("[%d] redv en P_FIN de [%d]\n",rank,rank+1 );
+        //     //     for(int j=0;j<10;j++){
+        //     //         printf("[%d]%d ",rank,p_fin[j] );
+        //     //     }
+        //     // }
+        // }
+        // else{
+        //     //Envia primera fila al anterior.//Recibe ultima fila del anterior.
+        //     // printf("C. Soy %d\n",rank );
+        //     MPI_Recv(p_ini, cols, MPI_SHORT,rank-1, 0, MPI_COMM_WORLD, &estado);
+        //     MPI_Send(smoothedim_temp,cols, MPI_SHORT, rank-1, 0, MPI_COMM_WORLD);
+        //     // for(int i=0;i<1;i++){
+        //     //     printf("[%d] recv en P_INI de [%d]\n",rank,rank-1 );
+        //     //     for(int j=0;j<10;j++){
+        //     //         printf("[%d]%d ",rank,p_ini[j] );
+        //     //     }
+        //     //     printf("\n");
+        //     //     printf("[%d] send SMOO a [%d]\n",rank,rank-1 );
+        //     //     for(int j=0;j<10;j++){
+        //     //         printf("[%d]%d ",rank,smoothedim_temp[j] );
+        //     //     }
+        //     //     printf("\n");
+        //     // }
+        // }
 
         // Se calcula la derivada de cada elemento
         if(rank==0){
