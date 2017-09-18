@@ -1,0 +1,50 @@
+#!/bin/bash
+
+if [ -z "$2" ]
+then
+    proc=4
+else
+    proc=$2
+fi
+
+case $1 in
+    "serial")
+        gcc -o canny  canny.c -pg -lm
+        ./canny imagen.pgm 1 0.3 0.8
+        diff -s -q imagen_openmp.pgm imagen_serial.pgm
+        diff -s -q imagen_mpi.pgm imagen_serial.pgm
+        ;;
+    "openmp")
+        gcc -fopenmp -o canny_openmp canny_openmp.c -pg -lm
+        ./canny_openmp imagen.pgm 1 0.3 0.8
+        diff -s -q imagen_openmp.pgm imagen_serial.pgm
+        ;;
+    "mpi")
+        mpicc -fopenmp -o canny_mpi canny_mpi2.c -lm
+        mpirun -np $proc canny_mpi imagen.pgm 1 0.3 0.8
+        diff -s -q imagen_mpi.pgm imagen_serial.pgm
+        ;;
+    "clean")
+        rm --o canny
+    	rm --o canny_openmp
+    	rm --o canny_mpi
+    	rm imagen_openmp.pgm
+    	rm imagen_serial.pgm
+    	rm imagen_mpi.pgm
+        rm -f gmon.out
+        ;;
+    "difOPENMP")
+    convert imagen_serial.pgm imagen_openmp.pgm -compare compare.jpg
+    ;;
+    "difMPI")
+        convert imagen_serial.pgm imagen_mpi.pgm -compare compare.jpg
+        ;;
+    *)
+        echo "Debe ingresar uno de los siguientes argumentos: "
+        echo -e "\t-> serial \t//Ejecucion serial"
+        echo -e "\t-> openmp \t//Ejecucion paralela con OPENMP"
+        echo -e "\t-> mpi \t\t//Ejecucion paralela con MPI"
+        echo -e "\t-> clean \t//Borra algunos archivos"
+        echo -e "\t-> difOPENMP \t//Crea una imagen con las diferencias entre SERIAl y OPENMP"
+        echo -e "\t-> difMPI \t//Crea una imagen con las diferencias entre SERIAl y MPI"
+esac
