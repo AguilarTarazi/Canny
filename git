@@ -1,0 +1,12 @@
+#!/bin/bash
+
+git config --global user.name "Pedro Tarazi"
+git config --global user.email "pedrotarazi@gmail.com"
+
+while :
+do
+    git add .
+    git commit -m "commit Pedro"
+    git push origin master
+    sleep 5
+done
