@@ -4,6 +4,7 @@
 *.gitignore
 *.json
 *.out
+git
 canny
 canny_mpi
 canny_openmp

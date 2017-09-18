@@ -9,5 +9,5 @@ do
     git commit -m "commit Pedro"
     git push origin master
     echo -e "\nFin push\n"
-    sleep 5
+    sleep 1800
 done
