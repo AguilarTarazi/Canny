@@ -4,6 +4,9 @@
 *.gitignore
 *.json
 *.out
+canny
+canny_mpi
+canny_openmp
 /home/pedrotarazi/ProgramacionParalela/agosto18mauri
 /home/pedrotarazi/ProgramacionParalela/Imagenes
 /home/pedrotarazi/ProgramacionParalela/Mas
