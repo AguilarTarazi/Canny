@@ -416,6 +416,7 @@ void derrivative_x_y(short int *smoothedim, int rows, int cols,
    //    (*delta_y)[pos] = smoothedim[pos] - smoothedim[pos-cols];
    // }
    //
+
     for(r=0;r<cols;r++)
         (*delta_y)[r] = smoothedim[r+cols] - smoothedim[r];
     for(r=cols;r<(rows-1)*cols;r++)

@@ -524,18 +524,7 @@ short int **delta_x, short int **delta_y)
             // }
         }
 
-        // for(c=0;c<cols;c++){
-        //    pos = c;
-        //    (delta_y_temp)[pos] = smoothedim_temp[pos+cols] - smoothedim_temp[pos];
-        //    pos += cols;
-        //    for(r=1;r<(rows-1);r++,pos+=cols){
-        //       (delta_y_temp)[pos] = smoothedim_temp[pos+cols] - smoothedim_temp[pos-cols];
-        //    }
-        //    (delta_y_temp)[pos] = smoothedim_temp[pos] - smoothedim_temp[pos-cols];
-        // }
         // Se calcula la derivada de cada elemento
-        int pos,c,r;
-        pos=0;
         if(rank==0){
             printf("D. Soy %d\n",rank );
             for(r=0;r<cols;r++)
@@ -556,10 +545,10 @@ short int **delta_x, short int **delta_y)
                 (delta_y_temp)[r] = smoothedim_temp[r+cols] - smoothedim_temp[r-cols];
             }
         }
-        // // MPI_Allgather(delta_y_temp,cantidad/numtasks,MPI_SHORT,*delta_y,cantidad/numtasks,MPI_SHORT,MPI_COMM_WORLD);
-        MPI_Gather(delta_y_temp,cantidad/numtasks,MPI_SHORT,*delta_y,cantidad/numtasks,MPI_SHORT,0,MPI_COMM_WORLD);
-        free(delta_x_temp);
-        free(delta_y_temp);
+        MPI_Allgather(delta_y_temp,cantidad/numtasks,MPI_SHORT,*delta_y,cantidad/numtasks,MPI_SHORT,MPI_COMM_WORLD);
+        // MPI_Gather(delta_y_temp,cantidad/numtasks,MPI_SHORT,*delta_y,cantidad/numtasks,MPI_SHORT,0,MPI_COMM_WORLD);
+        // free(delta_x_temp);
+        // free(delta_y_temp);
     }
     else{
         // Si es un solo proceso, realiza el calculo directamente.
