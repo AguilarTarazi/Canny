@@ -414,7 +414,7 @@ short int **delta_x, short int **delta_y)
         fprintf(stderr, "Error allocating the delta_x image.\n");
         exit(1);
     }
-    smoothedim_temp = &p_ini[cols];
+    smoothedim_temp = &p_ini[0];
     p_fin = &smoothedim_temp[cantidad/numtasks];
 
     /****************************************************************************
@@ -441,8 +441,10 @@ short int **delta_x, short int **delta_y)
         // para que quede una fila adicional arriba y una abajo
         if(rank > 0) displs[t] -= cols;
         printf("displs[%d] = %d\n",t, displs[t] );
+        printf("counts[%d] = %d\n",t, counts[t] );
     }
-    MPI_Scatterv(smoothedim,counts,displs,MPI_SHORT,p_ini,cantidad/numtasks+2*cols,MPI_SHORT,0,MPI_COMM_WORLD);
+    printf("rank %d cant %d cols %d rows %d\n",rank,cantidad/numtasks+2*cols,cols,rows );
+    MPI_Scatterv(smoothedim,counts,displs,MPI_SHORT,smoothedim_temp,cantidad/numtasks+2*cols,MPI_SHORT,0,MPI_COMM_WORLD);
     printf("RANK %d cruzo Scatterv\n",rank );
     // if(rank > 0) // && rank != numtasks-1)
     // nms_temp = nms_temp + cols;
