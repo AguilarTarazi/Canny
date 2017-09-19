@@ -386,15 +386,15 @@ void derrivative_x_y(short int *smoothedim, int rows, int cols,
    clock_t ini_derivate_x, fin_derivate_x;
    ini_derivate_x = clock();
    if(VERBOSE) printf("   Computing the X-direction derivative.\n");
-   // for(r=0;r<rows;r++){
-   //    pos = r * cols;
-   //    (*delta_x)[pos] = smoothedim[pos+1] - smoothedim[pos];
-   //    pos++;
-   //    for(c=1;c<(cols-1);c++,pos++){
-   //       (*delta_x)[pos] = smoothedim[pos+1] - smoothedim[pos-1];
-   //    }
-   //    (*delta_x)[pos] = smoothedim[pos] - smoothedim[pos-1];
-   // }
+   for(r=0;r<rows;r++){
+      pos = r * cols;
+      (*delta_x)[pos] = smoothedim[pos+1] - smoothedim[pos];
+      pos++;
+      for(c=1;c<(cols-1);c++,pos++){
+         (*delta_x)[pos] = smoothedim[pos+1] - smoothedim[pos-1];
+      }
+      (*delta_x)[pos] = smoothedim[pos] - smoothedim[pos-1];
+   }
    fin_derivate_x = clock();
    double secs_derivate_x = (double)(fin_derivate_x - ini_derivate_x) / CLOCKS_PER_SEC;
    printf("Tiempo primer bloque serial: \t\t%.5g	segundos\n", secs_derivate_x);

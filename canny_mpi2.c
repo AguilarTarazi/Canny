@@ -201,6 +201,7 @@ void canny(unsigned char *image, int rows, int cols, float sigma,
         //   MPI_Bcast(&smoothedim, 1, MPI_INT, 0, MPI_COMM_WORLD);
         if(VERBOSE) printf("Computing the X and Y first derivatives.\n");
         //   printf("ARRANCO DERRIVATIVE -> %d\n",rank );
+
         derrivative_x_y(smoothedim, rows, cols, &delta_x, &delta_y);
         if(rank == 0){
 
@@ -414,7 +415,7 @@ short int **delta_x, short int **delta_y)
         fprintf(stderr, "Error allocating the delta_x image.\n");
         exit(1);
     }
-    smoothedim_temp = &p_ini[0];
+    smoothedim_temp = &p_ini[cols];
     p_fin = &smoothedim_temp[cantidad/numtasks];
 
     /****************************************************************************
@@ -443,7 +444,7 @@ short int **delta_x, short int **delta_y)
         printf("displs[%d] = %d\n",t, displs[t] );
         printf("counts[%d] = %d\n",t, counts[t] );
     }
-    printf("rank %d cant %d cols %d rows %d\n",rank,cantidad/numtasks+2*cols,cols,rows );
+    printf("rank %d cant %d cols %d rows %d\n",rank,cantidad/numtasks,cols,rows );
     MPI_Scatterv(smoothedim,counts,displs,MPI_SHORT,smoothedim_temp,cantidad/numtasks+2*cols,MPI_SHORT,0,MPI_COMM_WORLD);
     printf("RANK %d cruzo Scatterv\n",rank );
     // if(rank > 0) // && rank != numtasks-1)
@@ -451,7 +452,7 @@ short int **delta_x, short int **delta_y)
 
     if(VERBOSE) printf("   Computing the X-direction derivative.\n");
 
-    // MPI_Scatter(smoothedim, cantidad/numtasks, MPI_SHORT, smoothedim_temp, cantidad/numtasks, MPI_SHORT, 0, MPI_COMM_WORLD);
+    MPI_Scatter(smoothedim, cantidad/numtasks, MPI_SHORT, smoothedim_temp, cantidad/numtasks, MPI_SHORT, 0, MPI_COMM_WORLD);
     int i,j;
     for (i = 0; i < cantidad/numtasks; i=i+cols) {
         j=0;
@@ -467,6 +468,7 @@ short int **delta_x, short int **delta_y)
     // MPI_Allgather(delta_x_temp,cantidad/numtasks,MPI_SHORT,*delta_x,cantidad/numtasks,MPI_SHORT,MPI_COMM_WORLD);
     // if(rank==1) for(int i=0;i<10;i++) printf("%d ",smoothedim_temp[i] ); printf("\n");
 
+    printf("despues del gather delta_x\n");
     /****************************************************************************
     * Compute the y-derivative. Adjust the derivative at the borders to avoid
     * losing pixels.
@@ -542,7 +544,7 @@ short int **delta_x, short int **delta_y)
         //     // }
         // }
 
-        // Se calcula la derivada de cada elemento
+        //Se calcula la derivada de cada elemento
         if(rank==0){
             printf("D. Soy %d\n",rank );
             for(r=0;r<cols;r++)
@@ -563,8 +565,29 @@ short int **delta_x, short int **delta_y)
                 (delta_y_temp)[r] = smoothedim_temp[r+cols] - smoothedim_temp[r-cols];
             }
         }
-        // MPI_Allgather(delta_y_temp,cantidad/numtasks,MPI_SHORT,*delta_y,cantidad/numtasks,MPI_SHORT,MPI_COMM_WORLD);
-        MPI_Gather(delta_y_temp,cantidad/numtasks,MPI_SHORT,*delta_y,cantidad/numtasks,MPI_SHORT,0,MPI_COMM_WORLD);
+        // printf("antes de derivada_y %d\n",rank );
+        // if(rank==0){
+        //     printf("D. Soy %d\n",rank );
+        //     for(r=0;r<cols;r++)
+        //         (delta_y_temp)[r] = smoothedim[r+cols] - smoothedim[r];
+        //     for(r=cols;r<cantidad/numtasks;r++)
+        //         (delta_y_temp)[r] = smoothedim[r+cols] - smoothedim[r-cols];
+        // }
+        // else if(rank==numtasks-1){
+        //     printf("E. Soy %d\n",rank );
+        //     for(r=rank*cantidad/numtasks;r<(rank+1)*cantidad/numtasks-cols;r++)
+        //         (delta_y_temp)[r] = smoothedim[r+cols] - smoothedim[r-cols];
+        //     for(r=(rank+1)*cantidad/numtasks-cols;r<(rank+1)*cantidad/numtasks;r++)
+        //         (delta_y_temp)[r] = smoothedim[r] - smoothedim[r-cols];
+        // }
+        // else{
+        //     printf("F. Soy %d\n",rank );
+        //     for(r=rank*cantidad/numtasks;r<(rank+1)*cantidad/numtasks;r++){
+        //         (delta_y_temp)[r] = smoothedim[r+cols] - smoothedim[r-cols];
+        //     }
+        // }
+        MPI_Allgather(delta_y_temp,cantidad/numtasks,MPI_SHORT,*delta_y,cantidad/numtasks,MPI_SHORT,MPI_COMM_WORLD);
+        // MPI_Gather(delta_y_temp,cantidad/numtasks,MPI_SHORT,*delta_y,cantidad/numtasks,MPI_SHORT,0,MPI_COMM_WORLD);
         // free(delta_x_temp);
         // free(delta_y_temp);
     }
