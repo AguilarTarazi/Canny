@@ -586,21 +586,8 @@ short int **delta_x, short int **delta_y)
                 (delta_y_temp)[r] = smoothedim_temp[r+cols] - smoothedim_temp[r-cols];
         }
 
-        if(rank==0){
-            printf("RANK %d\n",rank );
-            for(int i=cantidad_temp-cols;i<cantidad_temp-cols + 10;i++){
-                printf("%d - ",smoothedim_temp[i+cols]);
-            }
-            printf("\n");
-        }
-        printf("\n\n");
-        if(rank==1){
-            printf("RANK %d\n",rank );
-            for(int i=0;i<10;i++){
-                printf("%d - ",smoothedim_temp[i]);
-            }
-            printf("\n");
-        }
+
+    
         MPI_Gatherv(delta_y_temp,cantidad_temp,MPI_SHORT,*delta_y,counts,displs,MPI_SHORT,0,MPI_COMM_WORLD);
         // MPI_Allgather(delta_y_temp,cantidad/numtasks,MPI_SHORT,*delta_y,cantidad/numtasks,MPI_SHORT,MPI_COMM_WORLD);
         // MPI_Gather(delta_y_temp,cantidad_temp,MPI_SHORT,*delta_y,cantidad_temp,MPI_SHORT,0,MPI_COMM_WORLD);
