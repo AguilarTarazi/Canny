@@ -2,6 +2,7 @@
 
 git config --global user.name "Pedro Tarazi"
 git config --global user.email "pedrotarazi@gmail.com"
+git config --global credential.helper 'cache --timeout=43200'
 
 while :
 do
