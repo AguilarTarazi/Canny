@@ -401,14 +401,10 @@ short int **delta_x, short int **delta_y)
     cantidad = (rows + x)*cols;
 
     int cant_rows,cantidad_temp;
-    if(rows%numtasks == 0){
-        cant_rows = rows / numtasks;
-    }
+    if(rows%numtasks == 0) cant_rows = rows / numtasks;
     else{
-        if(rank<numtasks-1)
-            cant_rows = rows / numtasks;
-        else
-            cant_rows = rows / numtasks + 1;
+        if(rank<numtasks-1) cant_rows = rows / numtasks;
+        else    cant_rows = rows / numtasks + 1;
     }
     printf("RANK %d: %d filas\n",rank, cant_rows );
     cantidad_temp = cant_rows*cols;
