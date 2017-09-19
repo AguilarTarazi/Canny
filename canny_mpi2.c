@@ -570,49 +570,29 @@ short int **delta_x, short int **delta_y)
         // }
 
         //Se calcula la derivada de cada elemento
-        // if(rank==0){
-        //     printf("D. Soy %d\n",rank );
-        //     for(r=0;r<cols;r++)
-        //         (delta_y_temp)[r] = smoothedim_temp[r+cols] - smoothedim_temp[r];
-        //     for(r=cols;r<cantidad/numtasks;r++)
-        //         (delta_y_temp)[r] = smoothedim_temp[r+cols] - smoothedim_temp[r-cols];
-        // }
-        // else if(rank==numtasks-1){
-        //     printf("E. Soy %d\n",rank );
-        //     for(r=0;r<cantidad/numtasks-cols;r++)
-        //         (delta_y_temp)[r] = smoothedim_temp[r+cols] - smoothedim_temp[r-cols];
-        //     for(r=cantidad/numtasks-cols;r<cantidad/numtasks;r++)
-        //         (delta_y_temp)[r] = smoothedim_temp[r] - smoothedim_temp[r-cols];
-        // }
-        // else{
-        //     printf("F. Soy %d\n",rank );
-        //     for(r=0;r<cantidad/numtasks;r++){
-        //         (delta_y_temp)[r] = smoothedim_temp[r+cols] - smoothedim_temp[r-cols];
-        //     }
-        // }
-        // printf("antes de derivada_y %d\n",rank );
-        // if(rank==0){
-        //     printf("D. Soy %d\n",rank );
-        //     for(r=0;r<cols;r++)
-        //         (delta_y_temp)[r] = smoothedim[r+cols] - smoothedim[r];
-        //     for(r=cols;r<cantidad/numtasks;r++)
-        //         (delta_y_temp)[r] = smoothedim[r+cols] - smoothedim[r-cols];
-        // }
-        // else if(rank==numtasks-1){
-        //     printf("E. Soy %d\n",rank );
-        //     for(r=rank*cantidad/numtasks;r<(rank+1)*cantidad/numtasks-cols;r++)
-        //         (delta_y_temp)[r] = smoothedim[r+cols] - smoothedim[r-cols];
-        //     for(r=(rank+1)*cantidad/numtasks-cols;r<(rank+1)*cantidad/numtasks;r++)
-        //         (delta_y_temp)[r] = smoothedim[r] - smoothedim[r-cols];
-        // }
-        // else{
-        //     printf("F. Soy %d\n",rank );
-        //     for(r=rank*cantidad/numtasks;r<(rank+1)*cantidad/numtasks;r++){
-        //         (delta_y_temp)[r] = smoothedim[r+cols] - smoothedim[r-cols];
-        //     }
-        // }
+        if(rank==0){
+            printf("D. Soy %d\n",rank );
+            for(r=0;r<cols;r++)
+                (delta_y_temp)[r] = smoothedim_temp[r+cols] - smoothedim_temp[r];
+            for(r=cols;r<cantidad_temp;r++)
+                (delta_y_temp)[r] = smoothedim_temp[r+cols] - smoothedim_temp[r-cols];
+        }
+        else if(rank==numtasks-1){
+            printf("E. Soy %d\n",rank );
+            for(r=0;r<cantidad_temp-cols;r++)
+                (delta_y_temp)[r] = smoothedim_temp[r+cols] - smoothedim_temp[r-cols];
+            for(r=cantidad_temp-cols;r<cantidad_temp;r++)
+                (delta_y_temp)[r] = smoothedim_temp[r] - smoothedim_temp[r-cols];
+        }
+        else{
+            printf("F. Soy %d\n",rank );
+            for(r=0;r<cantidad_temp;r++)
+                (delta_y_temp)[r] = smoothedim_temp[r+cols] - smoothedim_temp[r-cols];
+        }
+
+        MPI_Gatherv(delta_y_temp,cantidad_temp,MPI_SHORT,*delta_y,counts,displs,MPI_SHORT,0,MPI_COMM_WORLD);
         // MPI_Allgather(delta_y_temp,cantidad/numtasks,MPI_SHORT,*delta_y,cantidad/numtasks,MPI_SHORT,MPI_COMM_WORLD);
-        // MPI_Gather(delta_y_temp,cantidad/numtasks,MPI_SHORT,*delta_y,cantidad/numtasks,MPI_SHORT,0,MPI_COMM_WORLD);
+        // MPI_Gather(delta_y_temp,cantidad_temp,MPI_SHORT,*delta_y,cantidad_temp,MPI_SHORT,0,MPI_COMM_WORLD);
         // free(delta_x_temp);
         // free(delta_y_temp);
     }

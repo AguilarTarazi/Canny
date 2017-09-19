@@ -417,12 +417,12 @@ void derrivative_x_y(short int *smoothedim, int rows, int cols,
    // }
    //
 
-    // for(r=0;r<cols;r++)
-    //     (*delta_y)[r] = smoothedim[r+cols] - smoothedim[r];
-    // for(r=cols;r<(rows*cols)-cols;r++)
-    //     (*delta_y)[r] = smoothedim[r+cols] - smoothedim[r-cols];
-    // for(r=(rows*cols)-cols;r<rows*cols;r++)
-    //     (*delta_y)[r] = smoothedim[r] - smoothedim[r-cols];
+    for(r=0;r<cols;r++)
+        (*delta_y)[r] = smoothedim[r+cols] - smoothedim[r];
+    for(r=cols;r<(rows*cols)-cols;r++)
+        (*delta_y)[r] = smoothedim[r+cols] - smoothedim[r-cols];
+    for(r=(rows*cols)-cols;r<rows*cols;r++)
+        (*delta_y)[r] = smoothedim[r] - smoothedim[r-cols];
 
    // for(int i=0;i<10;i++){printf("%d - ",smoothedim[i]);}
 
