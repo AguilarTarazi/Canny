@@ -452,7 +452,7 @@ short int **delta_x, short int **delta_y)
 
     if(VERBOSE) printf("   Computing the X-direction derivative.\n");
 
-    MPI_Scatter(smoothedim, cantidad/numtasks, MPI_SHORT, smoothedim_temp, cantidad/numtasks, MPI_SHORT, 0, MPI_COMM_WORLD);
+    // MPI_Scatter(smoothedim, cantidad/numtasks, MPI_SHORT, smoothedim_temp, cantidad/numtasks, MPI_SHORT, 0, MPI_COMM_WORLD);
     int i,j;
     for (i = 0; i < cantidad/numtasks; i=i+cols) {
         j=0;
