@@ -399,24 +399,49 @@ short int **delta_x, short int **delta_y)
     x = 0;
     if(rows % numtasks != 0) x = numtasks - (rows % numtasks);
     cantidad = (rows + x)*cols;
+
+    int cant_rows,cantidad_temp;
+    if(rows%numtasks == 0){
+        cant_rows = rows / numtasks;
+    }
+    else{
+        if(rank<numtasks-1)
+            cant_rows = rows / numtasks;
+        else
+            cant_rows = rows / numtasks + 1;
+    }
+    printf("RANK %d: %d filas\n",rank, cant_rows );
+    cantidad_temp = cant_rows*cols;
     // printf("ROWS: %d --- COLS: %d --- CANTIDAD: %d\n",rows,cols,cantidad );
     /****************************************************************************
     * Allocate temporary buffer images to store the derivatives.
     ****************************************************************************/
-    if(((delta_x_temp) = (short *) calloc(cantidad/numtasks, sizeof(short))) == NULL){
+    // if(((delta_x_temp) = (short *) calloc(cantidad/numtasks, sizeof(short))) == NULL){
+    //     fprintf(stderr, "Error allocating the delta_x image.\n");
+    //     exit(1);
+    // }
+    // if(((delta_y_temp) = (short *) calloc(cantidad/numtasks, sizeof(short))) == NULL){
+    //     fprintf(stderr, "Error allocating the delta_x image.\n");
+    //     exit(1);
+    // }
+    // if(((p_ini) = (short *) calloc((cantidad/numtasks)+(2*cols), sizeof(short))) == NULL){
+    //     fprintf(stderr, "Error allocating the delta_x image.\n");
+    //     exit(1);
+    // }
+    if(((delta_x_temp) = (short *) calloc(cantidad_temp, sizeof(short))) == NULL){
         fprintf(stderr, "Error allocating the delta_x image.\n");
         exit(1);
     }
-    if(((delta_y_temp) = (short *) calloc(cantidad/numtasks, sizeof(short))) == NULL){
+    if(((delta_y_temp) = (short *) calloc(cantidad_temp, sizeof(short))) == NULL){
         fprintf(stderr, "Error allocating the delta_x image.\n");
         exit(1);
     }
-    if(((p_ini) = (short *) calloc((cantidad/numtasks)+(2*cols), sizeof(short))) == NULL){
+    if(((p_ini) = (short *) calloc((cantidad_temp)+(2*cols), sizeof(short))) == NULL){
         fprintf(stderr, "Error allocating the delta_x image.\n");
         exit(1);
     }
     smoothedim_temp = &p_ini[0];
-    p_fin = &smoothedim_temp[cantidad/numtasks];
+    p_fin = &smoothedim_temp[cantidad_temp];
 
     /****************************************************************************
     * Allocate images to store the derivatives.
@@ -436,16 +461,16 @@ short int **delta_x, short int **delta_y)
     ****************************************************************************/
     int counts[numtasks], displs[numtasks];
     for (int t = 0; t < numtasks; t++) {
-        counts[t] = cantidad / numtasks + 2*cols;
-        displs[t] = t * cantidad / numtasks;
+        counts[t] = cantidad_temp + 2*cols;
+        displs[t] = t * cantidad_temp;
         // Para todos los procesos distintos del primero, retrocedo una fila,
         // para que quede una fila adicional arriba y una abajo
         if(rank > 0) displs[t] -= cols;
         printf("displs[%d] = %d\n",t, displs[t] );
         printf("counts[%d] = %d\n",t, counts[t] );
     }
-    printf("rank %d cant %d cols %d rows %d\n",rank,cantidad/numtasks,cols,rows );
-    MPI_Scatterv(smoothedim,counts,displs,MPI_SHORT,smoothedim_temp,cantidad/numtasks+2*cols,MPI_SHORT,0,MPI_COMM_WORLD);
+    printf("rank %d cant %d cols %d rows %d\n",rank,cantidad_temp,cols,rows );
+    MPI_Scatterv(smoothedim,counts,displs,MPI_SHORT,smoothedim_temp,cantidad_temp+2*cols,MPI_SHORT,0,MPI_COMM_WORLD);
     printf("RANK %d cruzo Scatterv\n",rank );
     // if(rank > 0) // && rank != numtasks-1)
     // nms_temp = nms_temp + cols;
@@ -454,7 +479,7 @@ short int **delta_x, short int **delta_y)
 
     // MPI_Scatter(smoothedim, cantidad/numtasks, MPI_SHORT, smoothedim_temp, cantidad/numtasks, MPI_SHORT, 0, MPI_COMM_WORLD);
     int i,j;
-    for (i = 0; i < cantidad/numtasks; i=i+cols) {
+    for (i = 0; i < cantidad_temp; i=i+cols) {
         j=0;
         delta_x_temp[i+j] = smoothedim_temp[i+j+1] - smoothedim_temp[i+j];
         for (j = 1; j < cols-1; j++) {
@@ -464,7 +489,7 @@ short int **delta_x, short int **delta_y)
     }
 
     // MPI_Gatherv(delta_x_temp,cantidad/numtasks,MPI_SHORT,*delta_x,counts,displs,MPI_SHORT,0,MPI_COMM_WORLD);
-    MPI_Gather(delta_x_temp,cantidad/numtasks,MPI_SHORT,*delta_x,cantidad/numtasks,MPI_SHORT,0,MPI_COMM_WORLD);
+    MPI_Gather(delta_x_temp,cantidad_temp,MPI_SHORT,*delta_x,cantidad_temp,MPI_SHORT,0,MPI_COMM_WORLD);
     // MPI_Allgather(delta_x_temp,cantidad/numtasks,MPI_SHORT,*delta_x,cantidad/numtasks,MPI_SHORT,MPI_COMM_WORLD);
     // if(rank==1) for(int i=0;i<10;i++) printf("%d ",smoothedim_temp[i] ); printf("\n");
 
@@ -545,26 +570,26 @@ short int **delta_x, short int **delta_y)
         // }
 
         //Se calcula la derivada de cada elemento
-        if(rank==0){
-            printf("D. Soy %d\n",rank );
-            for(r=0;r<cols;r++)
-                (delta_y_temp)[r] = smoothedim_temp[r+cols] - smoothedim_temp[r];
-            for(r=cols;r<cantidad/numtasks;r++)
-                (delta_y_temp)[r] = smoothedim_temp[r+cols] - smoothedim_temp[r-cols];
-        }
-        else if(rank==numtasks-1){
-            printf("E. Soy %d\n",rank );
-            for(r=0;r<cantidad/numtasks-cols;r++)
-                (delta_y_temp)[r] = smoothedim_temp[r+cols] - smoothedim_temp[r-cols];
-            for(r=cantidad/numtasks-cols;r<cantidad/numtasks;r++)
-                (delta_y_temp)[r] = smoothedim_temp[r] - smoothedim_temp[r-cols];
-        }
-        else{
-            printf("F. Soy %d\n",rank );
-            for(r=0;r<cantidad/numtasks;r++){
-                (delta_y_temp)[r] = smoothedim_temp[r+cols] - smoothedim_temp[r-cols];
-            }
-        }
+        // if(rank==0){
+        //     printf("D. Soy %d\n",rank );
+        //     for(r=0;r<cols;r++)
+        //         (delta_y_temp)[r] = smoothedim_temp[r+cols] - smoothedim_temp[r];
+        //     for(r=cols;r<cantidad/numtasks;r++)
+        //         (delta_y_temp)[r] = smoothedim_temp[r+cols] - smoothedim_temp[r-cols];
+        // }
+        // else if(rank==numtasks-1){
+        //     printf("E. Soy %d\n",rank );
+        //     for(r=0;r<cantidad/numtasks-cols;r++)
+        //         (delta_y_temp)[r] = smoothedim_temp[r+cols] - smoothedim_temp[r-cols];
+        //     for(r=cantidad/numtasks-cols;r<cantidad/numtasks;r++)
+        //         (delta_y_temp)[r] = smoothedim_temp[r] - smoothedim_temp[r-cols];
+        // }
+        // else{
+        //     printf("F. Soy %d\n",rank );
+        //     for(r=0;r<cantidad/numtasks;r++){
+        //         (delta_y_temp)[r] = smoothedim_temp[r+cols] - smoothedim_temp[r-cols];
+        //     }
+        // }
         // printf("antes de derivada_y %d\n",rank );
         // if(rank==0){
         //     printf("D. Soy %d\n",rank );
@@ -586,7 +611,7 @@ short int **delta_x, short int **delta_y)
         //         (delta_y_temp)[r] = smoothedim[r+cols] - smoothedim[r-cols];
         //     }
         // }
-        MPI_Allgather(delta_y_temp,cantidad/numtasks,MPI_SHORT,*delta_y,cantidad/numtasks,MPI_SHORT,MPI_COMM_WORLD);
+        // MPI_Allgather(delta_y_temp,cantidad/numtasks,MPI_SHORT,*delta_y,cantidad/numtasks,MPI_SHORT,MPI_COMM_WORLD);
         // MPI_Gather(delta_y_temp,cantidad/numtasks,MPI_SHORT,*delta_y,cantidad/numtasks,MPI_SHORT,0,MPI_COMM_WORLD);
         // free(delta_x_temp);
         // free(delta_y_temp);
