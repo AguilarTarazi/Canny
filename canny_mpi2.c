@@ -415,7 +415,7 @@ short int **delta_x, short int **delta_y)
         fprintf(stderr, "Error allocating the delta_x image.\n");
         exit(1);
     }
-    smoothedim_temp = &p_ini[cols];
+    smoothedim_temp = &p_ini[0];
     p_fin = &smoothedim_temp[cantidad/numtasks];
 
     /****************************************************************************
