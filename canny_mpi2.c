@@ -462,12 +462,12 @@ short int **delta_x, short int **delta_y)
         // Para todos los procesos distintos del primero, retrocedo una fila,
         // para que quede una fila adicional arriba y una abajo
         if(rank > 0) displs[t] -= cols;
-        printf("displs[%d] = %d\n",t, displs[t] );
-        printf("counts[%d] = %d\n",t, counts[t] );
+        // printf("displs[%d] = %d\n",t, displs[t] );
+        // printf("counts[%d] = %d\n",t, counts[t] );
     }
-    printf("rank %d cant %d cols %d rows %d\n",rank,cantidad_temp,cols,rows );
+    // printf("rank %d cant %d cols %d rows %d\n",rank,cantidad_temp,cols,rows );
     MPI_Scatterv(smoothedim,counts,displs,MPI_SHORT,smoothedim_temp,cantidad_temp+2*cols,MPI_SHORT,0,MPI_COMM_WORLD);
-    printf("RANK %d cruzo Scatterv\n",rank );
+    // printf("RANK %d cruzo Scatterv\n",rank );
     // if(rank > 0) // && rank != numtasks-1)
     // nms_temp = nms_temp + cols;
 
@@ -489,7 +489,7 @@ short int **delta_x, short int **delta_y)
     // MPI_Allgather(delta_x_temp,cantidad/numtasks,MPI_SHORT,*delta_x,cantidad/numtasks,MPI_SHORT,MPI_COMM_WORLD);
     // if(rank==1) for(int i=0;i<10;i++) printf("%d ",smoothedim_temp[i] ); printf("\n");
 
-    printf("despues del gather delta_x\n");
+    // printf("despues del gather delta_x\n");
     /****************************************************************************
     * Compute the y-derivative. Adjust the derivative at the borders to avoid
     * losing pixels.
